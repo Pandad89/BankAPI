@@ -2,120 +2,108 @@ const fs = require('fs');
 const chalk = require('chalk');
 
 
-const addCustomer = (id) => {
-    const users = loadUsers();
-    const existingId = users.find((user) => user.id === id);
+const addCustomer = (body) => {
+    const customers = loadCustomers();
+    const existingId = customers.find((customer) => customer.id === body.id);
 
     if (!existingId) {
-        users.push({
-            id: id,
+        customers.push({
+            id: body.id,
             funds: 0,
             credit: 0
         })
-        saveUser(users);
-        console.log(chalk.greenBright.inverse('New customer added to database'));
+        saveCustomer(customers);
+        throw ('New customer added to database');
     } else {
-        console.log(chalk.red.inverse('Customer ID already exists in database'));
+        throw Error('Customer ID already exists in database');
     }
-
-    saveUser(users);
 }
-const depositFunds = (id, funds) => {
-    const users = loadUsers();
-    const existingId = users.find((user) => user.id === id);
-    const user = users.find((user) => user.id === id);
 
+const depositFunds = (body) => {
+    const customers = loadCustomers();
+    const existingId = customers.find((customer) => customer.id === body.id);
+    let customer = customers.find((customer) => customer.id === body.id);
 
     if (existingId) {
+        customer.funds = customer.funds + body.funds;
 
-        user.funds = user.funds + funds;
-
-        saveUser(users);
+        saveCustomer(customers);
         console.log(chalk.greenBright.inverse('Funds deposited successfully'));
     } else {
-        console.log(chalk.red.inverse('Please enter a valid ID'));
+        throw Error('Please enter a valid ID');
     }
 }
 
-const withdrawFunds = (id, funds) => {
-    const users = loadUsers();
-    const existingId = users.find((user) => user.id === id);
-    const user = users.find((user) => user.id === id);
+const withdrawFunds = (body) => {
+    const customers = loadCustomers();
+    const existingId = customers.find((customer) => customer.id === body.id);
+    let customer = customers.find((customer) => customer.id === body.id);
 
     if (existingId) {
+        customer.funds = customer.funds - body.funds;
 
-        user.funds = user.funds - funds;
-
-        saveUser(users);
-        console.log(chalk.greenBright.inverse('Funds withdrawn successfully'))
+        saveCustomer(customers);
+        console.log(chalk.greenBright.inverse('Funds withdrawn successfully'));
     } else {
-        console.log(chalk.red.inverse('Please enter a valid ID'));
+        throw Error('Please enter a valid ID');
     }
 }
-const updateCredit = (id, credit) => {
-    const users = loadUsers();
-    const existingId = users.find((user) => user.id === id);
-    const user = users.find((user) => user.id === id);
+const updateCredit = (body) => {
+    const customers = loadCustomers();
+    const existingId = customers.find((customer) => customer.id === body.id);
+    const customer = customers.find((customer) => customer.id === body.id);
 
     if (existingId) {
 
-        user.credit = credit;
+        customer.credit = body.credit;
 
-        saveUser(users);
+        saveCustomer(customers);
         console.log(chalk.greenBright.inverse('Credit score updated successfully'))
     } else {
-        console.log(chalk.red.inverse('Please enter a valid ID'));
+        throw Error('Please enter a valid ID');
     }
 }
-const transferFunds = (id1, id2, funds) => {
-    const users = loadUsers();
-    const existingId1 = users.find((user) => user.id === id1);
-    const existingId2 = users.find((user) => user.id === id2);
-    const user1 = users.find((user) => user.id === id1);
-    const user2 = users.find((user) => user.id === id2);
+const transferFunds = (body) => {
+    const customers = loadCustomers();
+    const existingId1 = customers.find((customer) => customer.id === body.id1);
+    const existingId2 = customers.find((customer) => customer.id === body.id2);
+    const customer1 = customers.find((customer) => customer.id === body.id1);
+    const customer2 = customers.find((customer) => customer.id === body.id2);
 
     if (existingId1) {
         if (existingId2) {
-            user1.funds = user1.funds - funds;
-            user2.funds = user2.funds + funds;
+            customer1.funds = customer1.funds - body.funds;
+            customer2.funds = customer2.funds + body.funds;
 
         } else {
             console.log(chalk.red.inverse('Please enter a valid recipient ID'))
         }
-        saveUser(users);
+        saveCustomer(customers);
         console.log(chalk.greenBright.inverse('Funds transferred successfully'))
     } else {
         console.log(chalk.red.inverse('Please enter a valid sender ID'));
     }
 
 }
-const readCustomer = (id) => {
-    const users = loadUsers();
-    const user = users.find((user) => user.id === id);
+const readCustomer = (body) => {
+    const customers = loadCustomers();
+    const customer = customers.find((customer) => customer.id === body.id);
 
-    if (user) {
-        console.log(chalk.inverse('Customer information'))
-        console.log(chalk(`ID: ${user.id}`))
-        console.log(chalk(`Funds: ${user.funds}`))
-        console.log(chalk(`Credit Score: ${user.credit}`))
-    }
+    return customer
 }
 const listCustomers = () => {
-    const users = loadUsers();
-
-    console.log(chalk.inverse('Customer List'));
-
-    users.forEach((user) => {
-        console.log(chalk.yellow.inverse('ID:') + ' ' + chalk.yellow(user.id))
-    })
+    const dataBuffer = fs.readFileSync('customers.json');
+    const dataJSON = dataBuffer.toString();
+    return JSON.parse(dataJSON);
 }
 
-saveUser = (users) => {
-    const dataJSON = JSON.stringify(users);
+saveCustomer = (customers) => {
+    const dataJSON = JSON.stringify(customers);
+    console.log(dataJSON);
     fs.writeFileSync('customers.json', dataJSON);
 }
 
-const loadUsers = () => {
+const loadCustomers = () => {
     try {
         const dataBuffer = fs.readFileSync('customers.json');
         const dataJSON = dataBuffer.toString();
